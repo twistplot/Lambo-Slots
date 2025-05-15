@@ -83,11 +83,18 @@
 
   <script>
     const symbols = [
-      { name: "Lambo", image: "https://i.imgur.com/LhMzkCh.png" },
-      { name: "Rocket", image: "https://i.imgur.com/RYcMv1g.png" },
-      { name: "SOL", image: "https://cryptologos.cc/logos/solana-sol-logo.png?v=026" },
-      { name: "Diamond", image: "https://i.imgur.com/H6MC7XY.png" },
-      { name: "Money", image: "https://i.imgur.com/2cMgsdI.png" }
+      {
+        name: "SOL",
+        image: "https://cryptologos.cc/logos/solana-sol-logo.png"
+      },
+      {
+        name: "Rocket",
+        image: "https://upload.wikimedia.org/wikipedia/commons/e/ef/Rocket_emoji_u1f680.svg"
+      },
+      {
+        name: "Diamond",
+        image: "https://upload.wikimedia.org/wikipedia/commons/5/57/Emoji_u1f48e.svg"
+      }
     ];
 
     function spin() {
@@ -100,9 +107,9 @@
       document.getElementById("slot3").src = slot3.image;
 
       if (slot1.name === slot2.name && slot2.name === slot3.name) {
-        document.getElementById("result").textContent = `🎉 Jackpot! You hit 3 ${slot1.name}s!`;
+        document.getElementById("result").textContent = `🎉 Jackpot! 3 ${slot1.name}s!`;
       } else if (slot1.name === slot2.name || slot2.name === slot3.name || slot1.name === slot3.name) {
-        document.getElementById("result").textContent = `😎 Nice! You got 2 matching symbols.`;
+        document.getElementById("result").textContent = `😎 Nice! 2 matching symbols!`;
       } else {
         document.getElementById("result").textContent = `🙃 Try again!`;
       }
