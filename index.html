@@ -188,7 +188,7 @@
     </div>
     <button onclick="spin()" id="spinButton">Spin (1 SOL)</button>
     <div class="result" id="result"></div>
-    <div class="balance" id="balance">Balance: 0 SOL</div>
+    <div class="balance" id="balance">Balance: 10 SOL</div>
   </div>
 
   <!-- REPLACE THIS HREF WITH YOUR PUMP.FUN LAUNCH LINK -->
@@ -205,12 +205,14 @@
     const balanceDisplay = document.getElementById('balance');
     const pumpfunBtn = document.getElementById('pumpfunBtn');
 
-    let balance = 0;
+    let balance = 10; // Start with 10 SOL for demo
     let isSpinning = false;
     let publicKey = null;
 
     // Initialize when window loads
     window.addEventListener('load', async () => {
+      updateBalance();
+      
       if (window.solana && window.solana.isPhantom) {
         // Check if already connected
         try {
@@ -219,7 +221,6 @@
           walletAddress.textContent = `${publicKey.substring(0, 4)}...${publicKey.substring(publicKey.length - 4)}`;
           connectWallet.style.display = 'none';
           walletConnected.style.display = 'flex';
-          updateBalance(10); // Give 10 SOL for demo purposes
         } catch (e) {
           console.log("Not connected automatically");
         }
@@ -235,7 +236,6 @@
           walletAddress.textContent = `${publicKey.substring(0, 4)}...${publicKey.substring(publicKey.length - 4)}`;
           connectWallet.style.display = 'none';
           walletConnected.style.display = 'flex';
-          updateBalance(10); // Give 10 SOL for demo purposes
         } catch (err) {
           console.error("Connection error:", err);
         }
@@ -262,7 +262,7 @@
     }
 
     async function spin() {
-      if (isSpinning || !publicKey || balance < 1) return;
+      if (isSpinning || balance < 1) return;
       
       isSpinning = true;
       updateBalance();
@@ -279,67 +279,47 @@
         symbols[Math.floor(Math.random() * symbols.length)]
       ];
       
-      // Simulate transaction (in a real app, you would send an actual transaction)
-      setTimeout(async () => {
-        try {
-          // In a real implementation, you would:
-          // 1. Send transaction to deduct 1 SOL
-          // 2. Wait for confirmation
-          // 3. Calculate winnings
-          // 4. Send winnings back
-          
-          // For demo, we just simulate it
-          balance -= 1;
-          
-          // Stop spinning animation
-          slots.forEach(slot => slot.classList.remove("spinning"));
-          
-          // Display results
-          document.getElementById("slot1").textContent = results[0].emoji;
-          document.getElementById("slot2").textContent = results[1].emoji;
-          document.getElementById("slot3").textContent = results[2].emoji;
-          
-          // Check for wins
-          let winAmount = 0;
-          if (results[0].name === results[1].name && results[1].name === results[2].name) {
-            // Jackpot - 3 matching symbols
-            winAmount = 50;
-            document.getElementById("result").innerHTML = `🎉 <strong>JACKPOT!</strong> 3 ${results[0].name}s! +${winAmount} SOL`;
-            document.getElementById("slot-machine").classList.add("jackpot");
-            setTimeout(() => {
-              document.getElementById("slot-machine").classList.remove("jackpot");
-            }, 1500);
-          } else if (results[0].name === results[1].name || results[1].name === results[2].name || results[0].name === results[2].name) {
-            // 2 matching symbols
-            winAmount = 5;
-            document.getElementById("result").textContent = `😎 Nice! 2 matching symbols! +${winAmount} SOL`;
-          } else {
-            document.getElementById("result").textContent = "🙃 Try again!";
-          }
-          
-          // Update balance with winnings
-          balance += winAmount;
-          updateBalance();
-        } catch (err) {
-          document.getElementById("result").textContent = "❌ Transaction failed";
-          console.error(err);
-        } finally {
-          isSpinning = false;
-          updateBalance();
+      // Simulate spinning for 1.5 seconds
+      setTimeout(() => {
+        // Stop spinning animation
+        slots.forEach(slot => slot.classList.remove("spinning"));
+        
+        // Display results
+        document.getElementById("slot1").textContent = results[0].emoji;
+        document.getElementById("slot2").textContent = results[1].emoji;
+        document.getElementById("slot3").textContent = results[2].emoji;
+        
+        // Check for wins
+        let winAmount = 0;
+        if (results[0].name === results[1].name && results[1].name === results[2].name) {
+          // Jackpot - 3 matching symbols
+          winAmount = 50;
+          document.getElementById("result").innerHTML = `🎉 <strong>JACKPOT!</strong> 3 ${results[0].name}s! +${winAmount} SOL`;
+          document.getElementById("slot-machine").classList.add("jackpot");
+          setTimeout(() => {
+            document.getElementById("slot-machine").classList.remove("jackpot");
+          }, 1500);
+        } else if (results[0].name === results[1].name || results[1].name === results[2].name || results[0].name === results[2].name) {
+          // 2 matching symbols
+          winAmount = 5;
+          document.getElementById("result").textContent = `😎 Nice! 2 matching symbols! +${winAmount} SOL`;
+        } else {
+          document.getElementById("result").textContent = "🙃 Try again!";
         }
+        
+        // Update balance with winnings
+        balance = balance - 1 + winAmount;
+        updateBalance();
+        isSpinning = false;
       }, 1500);
     }
 
     // Initial spin to show emojis
     setTimeout(() => {
-      if (publicKey) {
-        spin();
-      } else {
-        // Show default state
-        document.getElementById("slot1").textContent = symbols[0].emoji;
-        document.getElementById("slot2").textContent = symbols[1].emoji;
-        document.getElementById("slot3").textContent = symbols[2].emoji;
-      }
+      // Show default state
+      document.getElementById("slot1").textContent = symbols[0].emoji;
+      document.getElementById("slot2").textContent = symbols[1].emoji;
+      document.getElementById("slot3").textContent = symbols[2].emoji;
     }, 500);
 
     // Pump.fun button customization
