@@ -96,16 +96,20 @@
 
     .slot {
       background: #e94560;
-      color: gold;
-      font-weight: bold;
-      font-size: 2rem;
-      width: 80px;
-      height: 80px;
+      width: 100px;
+      height: 100px;
+      border-radius: 10px;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
       display: flex;
       justify-content: center;
       align-items: center;
-      border-radius: 10px;
-      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .slot img {
+      max-width: 80%;
+      max-height: 80%;
+      object-fit: contain;
     }
 
     .spinning {
@@ -227,20 +231,36 @@
     .jackpot {
       animation: jackpot 0.5s infinite;
     }
+
+    /* Loading spinner */
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #e94560;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin-loader 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin-loader {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
   <div class="app-container">
     <header>
       <h1>Lambo Slots 🎰</h1>
-      <div class="wallet-connect" id="walletConnect"></div>
+      <div class="wallet-connect" id="walletConnect">
+        <button class="connect-button" id="connectButton">Connect Phantom</button>
+      </div>
     </header>
 
     <div class="slot-machine">
       <div class="slots-container" id="slotsContainer">
-        <div class="slot">DOGE</div>
-        <div class="slot">DOGE</div>
-        <div class="slot">DOGE</div>
+        <!-- Slots will be filled by JavaScript -->
       </div>
       
       <div class="controls">
@@ -254,7 +274,7 @@
           <div class="free-spin-badge" id="freeSpinBadge" style="display: none;"></div>
           <button class="claim-button" id="claimButton">Check for Free Spins</button>
         </div>
-        <button class="spin-button" id="spinButton">SPIN</button>
+        <button class="spin-button" id="spinButton" disabled>SPIN</button>
       </div>
       
       <div class="message" id="message">Connect your wallet to play!</div>
@@ -263,10 +283,37 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Memecoin symbols with image URLs
+      const symbols = [
+        { 
+          name: 'DOGE',
+          image: 'https://cryptologos.cc/logos/dogecoin-doge-logo.png'
+        },
+        { 
+          name: 'PEPE',
+          image: 'https://cryptologos.cc/logos/pepe-pepe-logo.png'
+        },
+        { 
+          name: 'BONK',
+          image: 'https://cryptologos.cc/logos/bonk-bonk-logo.png'
+        },
+        { 
+          name: 'SHIB',
+          image: 'https://cryptologos.cc/logos/shiba-inu-shib-logo.png'
+        },
+        { 
+          name: 'FLOKI',
+          image: 'https://cryptologos.cc/logos/floki-inu-floki-logo.png'
+        },
+        { 
+          name: 'WIF',
+          image: 'https://s2.coinmarketcap.com/static/img/coins/64x64/25767.png'
+        }
+      ];
+
       // Game state
-      const symbols = ['DOGE', 'PEPE', 'BONK', 'SHIB', 'FLOKI', 'WIF'];
       let spinning = false;
-      let result = ['DOGE', 'DOGE', 'DOGE'];
+      let result = [0, 0, 0]; // Indexes of symbols
       let balance = 0;
       let betAmount = 0.1;
       let freeSpins = 0;
@@ -286,6 +333,21 @@
       const increaseBetEl = document.getElementById('increaseBet');
       const freeSpinBadgeEl = document.getElementById('freeSpinBadge');
       const claimButtonEl = document.getElementById('claimButton');
+      const connectButtonEl = document.getElementById('connectButton');
+
+      // Initialize slots
+      function initializeSlots() {
+        slotsContainerEl.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+          const slot = document.createElement('div');
+          slot.className = 'slot';
+          const img = document.createElement('img');
+          img.src = symbols[result[i]].image;
+          img.alt = symbols[result[i]].name;
+          slot.appendChild(img);
+          slotsContainerEl.appendChild(slot);
+        }
+      }
 
       // Initialize Solana connection
       function initSolana() {
@@ -308,6 +370,7 @@
             updateWalletUI(true);
             updateBalance();
             checkFreeSpinEligibility();
+            spinButtonEl.disabled = false;
           }
         } catch (error) {
           console.log("Not connected:", error);
@@ -327,6 +390,8 @@
           updateWalletUI(true);
           updateBalance();
           checkFreeSpinEligibility();
+          spinButtonEl.disabled = false;
+          messageEl.textContent = "Welcome! Place your bet and spin!";
         } catch (error) {
           console.error("Connection error:", error);
           messageEl.textContent = "Failed to connect wallet";
@@ -341,6 +406,7 @@
           updateWalletUI(false);
           balance = 0;
           updateBalance();
+          spinButtonEl.disabled = true;
           messageEl.textContent = "Connect your wallet to play!";
         } catch (error) {
           console.error("Disconnect error:", error);
@@ -385,6 +451,12 @@
           const balanceLamports = await connection.getBalance(publicKey);
           balance = balanceLamports / solanaWeb3.LAMPORTS_PER_SOL;
           balanceEl.textContent = balance.toFixed(2);
+          
+          // Update max bet
+          if (betAmount > balance && freeSpins === 0) {
+            betAmount = Math.max(0.1, Math.floor(balance * 10) / 10);
+            betAmountEl.textContent = betAmount.toFixed(1);
+          }
         } catch (error) {
           console.error("Balance check error:", error);
         }
@@ -479,9 +551,9 @@
         
         const spinInterval = setInterval(() => {
           result = [
-            symbols[Math.floor(Math.random() * symbols.length)],
-            symbols[Math.floor(Math.random() * symbols.length)],
-            symbols[Math.floor(Math.random() * symbols.length)]
+            Math.floor(Math.random() * symbols.length),
+            Math.floor(Math.random() * symbols.length),
+            Math.floor(Math.random() * symbols.length)
           ];
           
           updateSlots();
@@ -498,7 +570,7 @@
       function updateSlots() {
         const slots = slotsContainerEl.querySelectorAll('.slot');
         slots.forEach((slot, index) => {
-          slot.textContent = result[index];
+          slot.innerHTML = `<img src="${symbols[result[index]].image}" alt="${symbols[result[index]].name}">`;
           slot.className = 'slot';
           if (spinning) slot.classList.add('spinning');
         });
@@ -539,11 +611,11 @@
         betAmountEl.textContent = betAmount.toFixed(1);
       });
       claimButtonEl.addEventListener('click', checkFreeSpinEligibility);
+      connectButtonEl.addEventListener('click', connectWallet);
 
       // Initialize
+      initializeSlots();
       initSolana();
-      updateSlots();
-      updateWalletUI(false);
     });
   </script>
 </body>
