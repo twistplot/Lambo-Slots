@@ -194,25 +194,17 @@
       { name: "Fire", emoji: "🔥" }
     ];
 
-    // Update balance and button state
     function updateBalance(amount) {
       if (amount !== undefined) {
         balance = amount;
       }
       balanceDisplay.textContent = `Balance: ${balance} SOL`;
-      // Spin enabled if not spinning and (wallet connected with balance >=1 OR no wallet connected demo mode)
       spinButton.disabled = isSpinning || (publicKey && balance < 1);
     }
 
-    // Spin function — works with or without wallet
     async function spin() {
-      console.log("Spin clicked");
-      if (isSpinning) {
-        console.log("Already spinning");
-        return;
-      }
+      if (isSpinning) return;
 
-      // If wallet connected, require balance >= 1
       if (publicKey && balance < 1) {
         alert("Insufficient balance to spin.");
         return;
@@ -226,14 +218,12 @@
       const slots = document.querySelectorAll(".slot");
       slots.forEach(slot => slot.classList.add("spinning"));
 
-      // Random results
       const results = [
         symbols[Math.floor(Math.random() * symbols.length)],
         symbols[Math.floor(Math.random() * symbols.length)],
         symbols[Math.floor(Math.random() * symbols.length)]
       ];
 
-      // Simulate spinning delay
       setTimeout(() => {
         slots.forEach(slot => slot.classList.remove("spinning"));
 
@@ -260,7 +250,6 @@
           document.getElementById("result").textContent = "🙃 Try again!";
         }
 
-        // Deduct 1 SOL only if wallet connected; else just simulate demo spins without deduction
         if (publicKey) {
           balance -= 1;
           balance += winAmount;
@@ -272,7 +261,6 @@
       }, 1500);
     }
 
-    // Connect Phantom wallet button logic
     connectWallet.addEventListener('click', async () => {
       if (window.solana && window.solana.isPhantom) {
         try {
@@ -282,9 +270,19 @@
           connectWallet.style.display = 'none';
           walletConnected.style.display = 'flex';
 
-          // Give demo balance on connect
           updateBalance(10);
         } catch (err) {
           console.error("Wallet connection failed:", err);
-          alert("Failed to connect
-                
+          alert("Failed to connect wallet.");
+        }
+      } else {
+        alert("Phantom Wallet not found. Please install it from https://phantom.app/");
+      }
+    });
+
+    window.onload = () => {
+      updateBalance(0);
+    };
+  </script>
+</body>
+</html>
