@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SOL Slot Machine</title>
+  <title>SOL Slot Machine 🎰</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -186,9 +186,9 @@
       <div class="slot" id="slot2">🪙</div>
       <div class="slot" id="slot3">🪙</div>
     </div>
-    <button onclick="spin()" id="spinButton">Spin (1 SOL)</button>
+    <button onclick="spin()" id="spinButton">Spin (FREE)</button>
     <div class="result" id="result"></div>
-    <div class="balance" id="balance">Balance: 10 SOL</div>
+    <div class="balance" id="balance">Wins: 0 SOL</div>
   </div>
 
   <!-- REPLACE THIS HREF WITH YOUR PUMP.FUN LAUNCH LINK -->
@@ -205,7 +205,7 @@
     const balanceDisplay = document.getElementById('balance');
     const pumpfunBtn = document.getElementById('pumpfunBtn');
 
-    let balance = 10; // Start with 10 SOL for demo
+    let totalWins = 0;
     let isSpinning = false;
     let publicKey = null;
 
@@ -253,19 +253,14 @@
       { name: "Fire", emoji: "🔥" }
     ];
 
-    function updateBalance(amount) {
-      if (amount !== undefined) {
-        balance = amount;
-      }
-      balanceDisplay.textContent = `Balance: ${balance} SOL`;
-      spinButton.disabled = balance < 1 || isSpinning;
+    function updateBalance() {
+      balanceDisplay.textContent = `Wins: ${totalWins} SOL`;
     }
 
     async function spin() {
-      if (isSpinning || balance < 1) return;
+      if (isSpinning) return;
       
       isSpinning = true;
-      updateBalance();
       document.getElementById("result").textContent = "Spinning...";
       
       // Add spinning animation
@@ -307,8 +302,8 @@
           document.getElementById("result").textContent = "🙃 Try again!";
         }
         
-        // Update balance with winnings
-        balance = balance - 1 + winAmount;
+        // Update total wins
+        totalWins += winAmount;
         updateBalance();
         isSpinning = false;
       }, 1500);
