@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SOL Slot Machine DEMO</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOL Slot Machine</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -12,34 +12,45 @@
       text-align: center;
       padding: 20px;
     }
+
     h1 {
       color: #00ffa3;
       margin-bottom: 30px;
     }
+
     .wallet-section {
       margin-bottom: 20px;
     }
-    button {
-      background: #00ffa3;
-      color: #0b0c10;
+
+    .wallet-btn {
+      background: #9945FF;
+      color: white;
       border: none;
-      padding: 12px 25px;
-      font-size: 16px;
+      padding: 10px 20px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
       transition: all 0.3s;
-      margin-top: 10px;
     }
-    button:hover {
-      background: #00cc88;
-      transform: scale(1.05);
+
+    .wallet-btn:hover {
+      background: #7a36cc;
     }
-    button:disabled {
-      background: #45a29e;
-      cursor: not-allowed;
-      transform: none;
+
+    .wallet-connected {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
+
+    .wallet-address {
+      background: rgba(153, 69, 255, 0.2);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
     .slot-machine {
       margin: 20px auto;
       width: 300px;
@@ -49,11 +60,13 @@
       background: #1f2833;
       box-shadow: 0 0 20px rgba(0, 255, 163, 0.3);
     }
+
     .slots {
       display: flex;
       justify-content: space-between;
       margin-bottom: 20px;
     }
+
     .slot {
       width: 80px;
       height: 80px;
@@ -66,39 +79,84 @@
       font-size: 40px;
       transition: transform 0.3s;
     }
+
     .slot.spinning {
       animation: slot-spin 0.1s infinite;
     }
+
+    button {
+      background: #00ffa3;
+      color: #0b0c10;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #00cc88;
+      transform: scale(1.05);
+    }
+
+    button:disabled {
+      background: #45a29e;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .result {
       margin-top: 20px;
       font-size: 18px;
       min-height: 50px;
     }
+
     .balance {
       margin-top: 15px;
       font-size: 16px;
       color: #66fcf1;
     }
-    .demo-notice {
-      background: rgba(255, 215, 0, 0.2);
-      padding: 10px;
-      border-radius: 8px;
-      margin: 20px auto;
-      max-width: 400px;
+
+    .pumpfun-btn {
+      display: block;
+      margin: 30px auto;
+      background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+      text-decoration: none;
+      max-width: 300px;
     }
+
+    .pumpfun-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
     @keyframes slot-spin {
       0% { transform: translateY(-10px); }
       50% { transform: translateY(10px); }
       100% { transform: translateY(-10px); }
     }
+
     @keyframes win-flash {
       0% { background: #1f2833; }
       50% { background: #00ffa3; }
       100% { background: #1f2833; }
     }
+
     .jackpot {
       animation: win-flash 0.5s 3;
     }
+
     @media (max-width: 500px) {
       .slot-machine {
         width: 90%;
@@ -112,10 +170,14 @@
   </style>
 </head>
 <body>
-  <h1>SOL Slot Machine DEMO 🎰</h1>
-
-  <div class="demo-notice">
-    🚀 DEMO MODE - No wallet needed! Play with fake SOL.
+  <h1>SOL Slot Machine 🎰</h1>
+  
+  <div class="wallet-section" id="walletSection">
+    <button class="wallet-btn" id="connectWallet">Connect Phantom Wallet</button>
+    <div class="wallet-connected" id="walletConnected" style="display: none;">
+      <span>Connected:</span>
+      <span class="wallet-address" id="walletAddress"></span>
+    </div>
   </div>
 
   <div class="slot-machine" id="slot-machine">
@@ -124,21 +186,65 @@
       <div class="slot" id="slot2">🪙</div>
       <div class="slot" id="slot3">🪙</div>
     </div>
-    <button id="spinButton">Spin (1 SOL)</button>
+    <button onclick="spin()" id="spinButton">Spin (1 SOL)</button>
     <div class="result" id="result"></div>
-    <div class="balance" id="balance">Balance: 10.00 SOL</div>
+    <div class="balance" id="balance">Balance: 0 SOL</div>
   </div>
 
+  <!-- REPLACE THIS HREF WITH YOUR PUMP.FUN LAUNCH LINK -->
+  <a href="https://pump.fun" class="pumpfun-btn" id="pumpfunBtn" target="_blank">
+    🚀 Launch on Pump.fun
+  </a>
+
   <script>
-    // Elements
-    const spinButton = document.getElementById("spinButton");
-    const resultDiv = document.getElementById("result");
-    const balanceDiv = document.getElementById("balance");
+    // Phantom Wallet Integration
+    const connectWallet = document.getElementById('connectWallet');
+    const walletConnected = document.getElementById('walletConnected');
+    const walletAddress = document.getElementById('walletAddress');
+    const spinButton = document.getElementById('spinButton');
+    const balanceDisplay = document.getElementById('balance');
+    const pumpfunBtn = document.getElementById('pumpfunBtn');
 
-    let balance = 10; // Starting demo balance
+    let balance = 0;
     let isSpinning = false;
+    let publicKey = null;
 
-    // Slot machine symbols
+    // Initialize when window loads
+    window.addEventListener('load', async () => {
+      if (window.solana && window.solana.isPhantom) {
+        // Check if already connected
+        try {
+          const response = await window.solana.connect({ onlyIfTrusted: true });
+          publicKey = response.publicKey.toString();
+          walletAddress.textContent = `${publicKey.substring(0, 4)}...${publicKey.substring(publicKey.length - 4)}`;
+          connectWallet.style.display = 'none';
+          walletConnected.style.display = 'flex';
+          updateBalance(10); // Give 10 SOL for demo purposes
+        } catch (e) {
+          console.log("Not connected automatically");
+        }
+      }
+    });
+
+    // Connect Wallet Handler
+    connectWallet.addEventListener('click', async () => {
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          const response = await window.solana.connect();
+          publicKey = response.publicKey.toString();
+          walletAddress.textContent = `${publicKey.substring(0, 4)}...${publicKey.substring(publicKey.length - 4)}`;
+          connectWallet.style.display = 'none';
+          walletConnected.style.display = 'flex';
+          updateBalance(10); // Give 10 SOL for demo purposes
+        } catch (err) {
+          console.error("Connection error:", err);
+        }
+      } else {
+        window.open('https://phantom.app/', '_blank');
+      }
+    });
+
+    // Game Logic
     const symbols = [
       { name: "Solana", emoji: "🪙" },
       { name: "Rocket", emoji: "🚀" },
@@ -147,85 +253,101 @@
       { name: "Fire", emoji: "🔥" }
     ];
 
-    // Update balance display
-    function updateBalance() {
-      balanceDiv.textContent = `Balance: ${balance.toFixed(2)} SOL`;
-      spinButton.disabled = isSpinning || balance < 1;
-    }
-
-    // Reset slots to default symbol
-    function resetSlots() {
-      document.getElementById("slot1").textContent = symbols[0].emoji;
-      document.getElementById("slot2").textContent = symbols[0].emoji;
-      document.getElementById("slot3").textContent = symbols[0].emoji;
-    }
-
-    // Spin function
-    function spin() {
-      if (isSpinning) return;
-      if (balance < 1) {
-        alert("Game over! Refresh page to play again.");
-        return;
+    function updateBalance(amount) {
+      if (amount !== undefined) {
+        balance = amount;
       }
+      balanceDisplay.textContent = `Balance: ${balance} SOL`;
+      spinButton.disabled = balance < 1 || isSpinning;
+    }
+
+    async function spin() {
+      if (isSpinning || !publicKey || balance < 1) return;
       
       isSpinning = true;
       updateBalance();
-      resultDiv.textContent = "Spinning...";
+      document.getElementById("result").textContent = "Spinning...";
       
-      const slots = [
-        document.getElementById("slot1"),
-        document.getElementById("slot2"),
-        document.getElementById("slot3"),
-      ];
-
       // Add spinning animation
+      const slots = document.querySelectorAll(".slot");
       slots.forEach(slot => slot.classList.add("spinning"));
-
-      // Randomly pick symbols after delay
-      setTimeout(() => {
-        // Stop spinning animation
-        slots.forEach(slot => slot.classList.remove("spinning"));
-
-        const results = [
-          symbols[Math.floor(Math.random() * symbols.length)],
-          symbols[Math.floor(Math.random() * symbols.length)],
-          symbols[Math.floor(Math.random() * symbols.length)],
-        ];
-
-        slots[0].textContent = results[0].emoji;
-        slots[1].textContent = results[1].emoji;
-        slots[2].textContent = results[2].emoji;
-
-        // Deduct spin cost
-        balance -= 1;
-
-        // Check for win
-        let winAmount = 0;
-        if (results[0].name === results[1].name && results[1].name === results[2].name) {
-          winAmount = 50;
-          resultDiv.innerHTML = `🎉 <strong>JACKPOT!</strong> 3 ${results[0].name}s! +${winAmount} SOL`;
-          document.getElementById("slot-machine").classList.add("jackpot");
-          setTimeout(() => {
-            document.getElementById("slot-machine").classList.remove("jackpot");
-          }, 1500);
-        } else if (results[0].name === results[1].name || results[1].name === results[2].name || results[0].name === results[2].name) {
-          winAmount = 5;
-          resultDiv.textContent = `😎 Nice! 2 matching symbols! +${winAmount} SOL`;
-        } else {
-          resultDiv.textContent = "🙃 Try again!";
+      
+      // Generate results
+      const results = [
+        symbols[Math.floor(Math.random() * symbols.length)],
+        symbols[Math.floor(Math.random() * symbols.length)],
+        symbols[Math.floor(Math.random() * symbols.length)]
+      ];
+      
+      // Simulate transaction (in a real app, you would send an actual transaction)
+      setTimeout(async () => {
+        try {
+          // In a real implementation, you would:
+          // 1. Send transaction to deduct 1 SOL
+          // 2. Wait for confirmation
+          // 3. Calculate winnings
+          // 4. Send winnings back
+          
+          // For demo, we just simulate it
+          balance -= 1;
+          
+          // Stop spinning animation
+          slots.forEach(slot => slot.classList.remove("spinning"));
+          
+          // Display results
+          document.getElementById("slot1").textContent = results[0].emoji;
+          document.getElementById("slot2").textContent = results[1].emoji;
+          document.getElementById("slot3").textContent = results[2].emoji;
+          
+          // Check for wins
+          let winAmount = 0;
+          if (results[0].name === results[1].name && results[1].name === results[2].name) {
+            // Jackpot - 3 matching symbols
+            winAmount = 50;
+            document.getElementById("result").innerHTML = `🎉 <strong>JACKPOT!</strong> 3 ${results[0].name}s! +${winAmount} SOL`;
+            document.getElementById("slot-machine").classList.add("jackpot");
+            setTimeout(() => {
+              document.getElementById("slot-machine").classList.remove("jackpot");
+            }, 1500);
+          } else if (results[0].name === results[1].name || results[1].name === results[2].name || results[0].name === results[2].name) {
+            // 2 matching symbols
+            winAmount = 5;
+            document.getElementById("result").textContent = `😎 Nice! 2 matching symbols! +${winAmount} SOL`;
+          } else {
+            document.getElementById("result").textContent = "🙃 Try again!";
+          }
+          
+          // Update balance with winnings
+          balance += winAmount;
+          updateBalance();
+        } catch (err) {
+          document.getElementById("result").textContent = "❌ Transaction failed";
+          console.error(err);
+        } finally {
+          isSpinning = false;
+          updateBalance();
         }
-
-        balance += winAmount;
-        updateBalance();
-        isSpinning = false;
       }, 1500);
     }
 
-    // Event listeners
-    spinButton.addEventListener("click", spin);
+    // Initial spin to show emojis
+    setTimeout(() => {
+      if (publicKey) {
+        spin();
+      } else {
+        // Show default state
+        document.getElementById("slot1").textContent = symbols[0].emoji;
+        document.getElementById("slot2").textContent = symbols[1].emoji;
+        document.getElementById("slot3").textContent = symbols[2].emoji;
+      }
+    }, 500);
 
-    // Initialize
-    updateBalance();
+    // Pump.fun button customization
+    // Replace this with your actual Pump.fun launch link when ready
+    // pumpfunBtn.href = "YOUR_ACTUAL_PUMPFUN_LINK_HERE";
   </script>
+
+  <!-- Phantom Wallet Provider -->
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
 </body>
 </html>
