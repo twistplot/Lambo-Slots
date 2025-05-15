@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lambo Slots - Solana Memecoin Casino</title>
+  <script src="https://unpkg.com/@solana/web3.js@1.73.0/lib/index.iife.min.js"></script>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      max-width: 800px;
+      width: 100%;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      color: gold;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+      margin: 0;
+    }
+
+    .wallet-connect {
+      position: relative;
+    }
+
+    .connect-button {
+      background: linear-gradient(90deg, #ff8a00, #e52e71);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .connect-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #e52e71;
+    }
+
+    .wallet-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .truncate-address {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+
+    .disconnect-button {
+      background: #e94560;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 15px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .slot-machine {
+      background: #0f3460;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+
+    .slots-container {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+    }
+
+    .slot {
+      background: #e94560;
+      color: gold;
+      font-weight: bold;
+      font-size: 2rem;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 10px;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .spinning {
+      animation: spin 0.1s infinite linear;
+    }
+
+    .controls {
+      margin: 20px 0;
+    }
+
+    .balance {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      color: gold;
+    }
+
+    .bet-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .bet-controls button {
+      background: #e94560;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .spin-button {
+      background: gold;
+      color: #0f3460;
+      border: none;
+      border-radius: 50px;
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .spin-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px gold;
+    }
+
+    .spin-button:disabled {
+      background: #555;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .message {
+      margin-top: 20px;
+      font-size: 1.1rem;
+      min-height: 30px;
+      color: gold;
+    }
+
+    .free-spins {
+      margin: 15px 0;
+    }
+
+    .free-spin-badge {
+      background: linear-gradient(90deg, #00c9ff, #92fe9d);
+      color: #0f3460;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 10px;
+      animation: pulse 2s infinite;
+    }
+
+    .claim-button {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid gold;
+      border-radius: 20px;
+      padding: 8px 15px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .claim-button:hover:not(:disabled) {
+      background: rgba(255, 215, 0, 0.2);
+    }
+
+    .claim-button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    @keyframes spin {
+      0% { transform: rotateX(0deg); }
+      100% { transform: rotateX(360deg); }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes jackpot {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .jackpot {
+      animation: jackpot 0.5s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>Lambo Slots 🎰</h1>
+      <div class="wallet-connect" id="walletConnect"></div>
+    </header>
+
+    <div class="slot-machine">
+      <div class="slots-container" id="slotsContainer">
+        <div class="slot">DOGE</div>
+        <div class="slot">DOGE</div>
+        <div class="slot">DOGE</div>
+      </div>
+      
+      <div class="controls">
+        <div class="balance">Balance: <span id="balance">0</span> SOL</div>
+        <div class="bet-controls">
+          <button id="decreaseBet">-</button>
+          <span>Bet: <span id="betAmount">0.1</span> SOL</span>
+          <button id="increaseBet">+</button>
+        </div>
+        <div class="free-spins">
+          <div class="free-spin-badge" id="freeSpinBadge" style="display: none;"></div>
+          <button class="claim-button" id="claimButton">Check for Free Spins</button>
+        </div>
+        <button class="spin-button" id="spinButton">SPIN</button>
+      </div>
+      
+      <div class="message" id="message">Connect your wallet to play!</div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Game state
+      const symbols = ['DOGE', 'PEPE', 'BONK', 'SHIB', 'FLOKI', 'WIF'];
+      let spinning = false;
+      let result = ['DOGE', 'DOGE', 'DOGE'];
+      let balance = 0;
+      let betAmount = 0.1;
+      let freeSpins = 0;
+      let lastFreeSpinClaim = 0;
+      let tokenBalance = 0;
+      let publicKey = null;
+      let connection = null;
+
+      // DOM elements
+      const walletConnectEl = document.getElementById('walletConnect');
+      const slotsContainerEl = document.getElementById('slotsContainer');
+      const balanceEl = document.getElementById('balance');
+      const betAmountEl = document.getElementById('betAmount');
+      const spinButtonEl = document.getElementById('spinButton');
+      const messageEl = document.getElementById('message');
+      const decreaseBetEl = document.getElementById('decreaseBet');
+      const increaseBetEl = document.getElementById('increaseBet');
+      const freeSpinBadgeEl = document.getElementById('freeSpinBadge');
+      const claimButtonEl = document.getElementById('claimButton');
+
+      // Initialize Solana connection
+      function initSolana() {
+        if ('solana' in window) {
+          connection = new solanaWeb3.Connection(
+            "https://api.mainnet-beta.solana.com"
+          );
+          
+          checkConnection();
+          window.solana.on('accountChanged', handleAccountChanged);
+        }
+      }
+
+      // Check if wallet is connected
+      async function checkConnection() {
+        try {
+          const response = await window.solana.connect({ onlyIfTrusted: true });
+          if (response.publicKey) {
+            publicKey = response.publicKey;
+            updateWalletUI(true);
+            updateBalance();
+            checkFreeSpinEligibility();
+          }
+        } catch (error) {
+          console.log("Not connected:", error);
+        }
+      }
+
+      // Connect wallet handler
+      async function connectWallet() {
+        try {
+          if (!('solana' in window)) {
+            window.open('https://phantom.app/', '_blank');
+            return;
+          }
+
+          const response = await window.solana.connect();
+          publicKey = response.publicKey;
+          updateWalletUI(true);
+          updateBalance();
+          checkFreeSpinEligibility();
+        } catch (error) {
+          console.error("Connection error:", error);
+          messageEl.textContent = "Failed to connect wallet";
+        }
+      }
+
+      // Disconnect wallet handler
+      async function disconnectWallet() {
+        try {
+          await window.solana.disconnect();
+          publicKey = null;
+          updateWalletUI(false);
+          balance = 0;
+          updateBalance();
+          messageEl.textContent = "Connect your wallet to play!";
+        } catch (error) {
+          console.error("Disconnect error:", error);
+        }
+      }
+
+      // Handle account changes
+      function handleAccountChanged(newPublicKey) {
+        if (newPublicKey) {
+          publicKey = newPublicKey;
+          updateBalance();
+          checkFreeSpinEligibility();
+        } else {
+          disconnectWallet();
+        }
+      }
+
+      // Update wallet UI
+      function updateWalletUI(isConnected) {
+        if (isConnected) {
+          const shortAddress = `${publicKey.toString().substring(0, 4)}...${publicKey.toString().substring(publicKey.toString().length - 4)}`;
+          walletConnectEl.innerHTML = `
+            <div class="wallet-info">
+              <span class="truncate-address">${shortAddress}</span>
+              <button class="disconnect-button" id="disconnectButton">Disconnect</button>
+            </div>
+          `;
+          document.getElementById('disconnectButton').addEventListener('click', disconnectWallet);
+        } else {
+          walletConnectEl.innerHTML = `
+            <button class="connect-button" id="connectButton">Connect Phantom</button>
+          `;
+          document.getElementById('connectButton').addEventListener('click', connectWallet);
+        }
+      }
+
+      // Update SOL balance
+      async function updateBalance() {
+        if (!publicKey) return;
+        
+        try {
+          const balanceLamports = await connection.getBalance(publicKey);
+          balance = balanceLamports / solanaWeb3.LAMPORTS_PER_SOL;
+          balanceEl.textContent = balance.toFixed(2);
+        } catch (error) {
+          console.error("Balance check error:", error);
+        }
+      }
+
+      // Check for free spins
+      function checkFreeSpinEligibility() {
+        if (!publicKey) return;
+
+        const now = Date.now();
+        let earnedSpins = 0;
+
+        // 1 free spin per hour
+        if (now - lastFreeSpinClaim > 3600000) {
+          earnedSpins += 1;
+        }
+
+        // Additional spins based on token balance (placeholder)
+        if (tokenBalance >= 1000000) {
+          earnedSpins += 3;
+        } else if (tokenBalance >= 100000) {
+          earnedSpins += 1;
+        }
+
+        if (earnedSpins > 0) {
+          freeSpins += earnedSpins;
+          lastFreeSpinClaim = now;
+          updateFreeSpinUI();
+          messageEl.textContent = `You earned ${earnedSpins} free spin${earnedSpins > 1 ? 's' : ''}!`;
+        }
+
+        updateClaimButton();
+      }
+
+      // Update free spin UI
+      function updateFreeSpinUI() {
+        if (freeSpins > 0) {
+          freeSpinBadgeEl.style.display = 'inline-block';
+          freeSpinBadgeEl.textContent = `FREE SPINS: ${freeSpins}`;
+        } else {
+          freeSpinBadgeEl.style.display = 'none';
+        }
+      }
+
+      // Update claim button state
+      function updateClaimButton() {
+        const now = Date.now();
+        const timeLeft = 3600000 - (now - lastFreeSpinClaim);
+
+        if (timeLeft > 0) {
+          claimButtonEl.disabled = true;
+          const minutesLeft = Math.floor(timeLeft / 60000);
+          claimButtonEl.textContent = `Next free spin in ${minutesLeft} min`;
+        } else {
+          claimButtonEl.disabled = false;
+          claimButtonEl.textContent = 'Check for Free Spins';
+        }
+      }
+
+      // Spin the slot machine
+      async function spin() {
+        if (spinning) return;
+        
+        let usingFreeSpin = false;
+        
+        if (freeSpins > 0) {
+          usingFreeSpin = true;
+          freeSpins--;
+          updateFreeSpinUI();
+        } else if (balance < betAmount) {
+          messageEl.textContent = 'Not enough balance!';
+          return;
+        } else {
+          try {
+            // In a real app, you would send the transaction here
+            // For this demo, we'll just simulate it
+            balance -= betAmount;
+            updateBalance();
+          } catch (error) {
+            messageEl.textContent = 'Transaction failed';
+            return;
+          }
+        }
+        
+        spinning = true;
+        spinButtonEl.disabled = true;
+        messageEl.textContent = usingFreeSpin ? 'Free Spin!' : 'Spinning...';
+        
+        // Simulate spinning animation
+        const spins = 10 + Math.floor(Math.random() * 10);
+        let spinCount = 0;
+        
+        const spinInterval = setInterval(() => {
+          result = [
+            symbols[Math.floor(Math.random() * symbols.length)],
+            symbols[Math.floor(Math.random() * symbols.length)],
+            symbols[Math.floor(Math.random() * symbols.length)]
+          ];
+          
+          updateSlots();
+          
+          spinCount++;
+          if (spinCount >= spins) {
+            clearInterval(spinInterval);
+            determineResult();
+          }
+        }, 100);
+      }
+
+      // Update slot display
+      function updateSlots() {
+        const slots = slotsContainerEl.querySelectorAll('.slot');
+        slots.forEach((slot, index) => {
+          slot.textContent = result[index];
+          slot.className = 'slot';
+          if (spinning) slot.classList.add('spinning');
+        });
+      }
+
+      // Determine the spin result
+      function determineResult() {
+        spinning = false;
+        spinButtonEl.disabled = false;
+        
+        // Check for wins
+        if (result[0] === result[1] && result[1] === result[2]) {
+          const winAmount = betAmount * 10;
+          balance += winAmount;
+          updateBalance();
+          messageEl.textContent = `JACKPOT! Won ${winAmount.toFixed(2)} SOL!`;
+          slotsContainerEl.querySelectorAll('.slot').forEach(slot => {
+            slot.classList.add('jackpot');
+          });
+        } else if (result[0] === result[1] || result[1] === result[2]) {
+          const winAmount = betAmount * 2;
+          balance += winAmount;
+          updateBalance();
+          messageEl.textContent = `Winner! Won ${winAmount.toFixed(2)} SOL!`;
+        } else {
+          messageEl.textContent = 'Try again!';
+        }
+      }
+
+      // Event listeners
+      spinButtonEl.addEventListener('click', spin);
+      decreaseBetEl.addEventListener('click', () => {
+        betAmount = Math.max(0.1, betAmount - 0.1);
+        betAmountEl.textContent = betAmount.toFixed(1);
+      });
+      increaseBetEl.addEventListener('click', () => {
+        betAmount = Math.min(balance, betAmount + 0.1);
+        betAmountEl.textContent = betAmount.toFixed(1);
+      });
+      claimButtonEl.addEventListener('click', checkFreeSpinEligibility);
+
+      // Initialize
+      initSolana();
+      updateSlots();
+      updateWalletUI(false);
+    });
+  </script>
+</body>
+</html>
