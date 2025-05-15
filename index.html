@@ -40,12 +40,7 @@
       align-items: center;
       justify-content: center;
       background: #0b0c10;
-    }
-
-    .slot img {
-      width: 60px;
-      height: 60px;
-      object-fit: contain;
+      font-size: 40px;
     }
 
     button {
@@ -74,9 +69,9 @@
   <h1>SOL Slot Machine 🎰</h1>
   <div class="slot-machine">
     <div class="slots">
-      <div class="slot"><img id="slot1" src="" alt=""></div>
-      <div class="slot"><img id="slot2" src="" alt=""></div>
-      <div class="slot"><img id="slot3" src="" alt=""></div>
+      <div class="slot" id="slot1">🪙</div>
+      <div class="slot" id="slot2">🪙</div>
+      <div class="slot" id="slot3">🪙</div>
     </div>
     <button onclick="spin()">Spin</button>
     <div class="result" id="result"></div>
@@ -84,11 +79,11 @@
 
   <script>
     const symbols = [
-      { name: "SOL", image: "https://cryptologos.cc/logos/solana-sol-logo.png" },
-      { name: "Rocket", image: "https://cdn-icons-png.flaticon.com/512/3213/3213489.png" },
-      { name: "Diamond", image: "https://cdn-icons-png.flaticon.com/512/1086/1086933.png" },
-      { name: "Coin", image: "https://cdn-icons-png.flaticon.com/512/3144/3144456.png" },
-      { name: "Money Bag", image: "https://cdn-icons-png.flaticon.com/512/2089/2089641.png" }
+      { name: "Solana", emoji: "🪙" },
+      { name: "Rocket", emoji: "🚀" },
+      { name: "Diamond", emoji: "💎" },
+      { name: "Money", emoji: "💰" },
+      { name: "Fire", emoji: "🔥" }
     ];
 
     function spin() {
@@ -96,9 +91,9 @@
       const slot2 = symbols[Math.floor(Math.random() * symbols.length)];
       const slot3 = symbols[Math.floor(Math.random() * symbols.length)];
 
-      document.getElementById("slot1").src = slot1.image;
-      document.getElementById("slot2").src = slot2.image;
-      document.getElementById("slot3").src = slot3.image;
+      document.getElementById("slot1").textContent = slot1.emoji;
+      document.getElementById("slot2").textContent = slot2.emoji;
+      document.getElementById("slot3").textContent = slot3.emoji;
 
       if (slot1.name === slot2.name && slot2.name === slot3.name) {
         document.getElementById("result").textContent = `🎉 Jackpot! You hit 3 ${slot1.name}s!`;
@@ -109,7 +104,7 @@
       }
     }
 
-    // Initial spin to show images
+    // Initial spin to show emojis
     spin();
   </script>
 </body>
