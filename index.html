@@ -18,8 +18,41 @@
       margin-bottom: 30px;
     }
 
+    .wallet-section {
+      margin-bottom: 20px;
+    }
+
+    .wallet-btn {
+      background: #9945FF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+
+    .wallet-btn:hover {
+      background: #7a36cc;
+    }
+
+    .wallet-connected {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .wallet-address {
+      background: rgba(153, 69, 255, 0.2);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
     .slot-machine {
-      margin: auto;
+      margin: 20px auto;
       width: 300px;
       border: 3px solid #00ffa3;
       border-radius: 10px;
@@ -81,10 +114,31 @@
       min-height: 50px;
     }
 
-    .score {
+    .balance {
       margin-top: 15px;
       font-size: 16px;
       color: #66fcf1;
+    }
+
+    .pumpfun-btn {
+      display: block;
+      margin: 30px auto;
+      background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+      text-decoration: none;
+      max-width: 300px;
+    }
+
+    .pumpfun-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
     }
 
     @keyframes slot-spin {
@@ -117,6 +171,15 @@
 </head>
 <body>
   <h1>SOL Slot Machine 🎰</h1>
+  
+  <div class="wallet-section" id="walletSection">
+    <button class="wallet-btn" id="connectWallet">Connect Phantom Wallet</button>
+    <div class="wallet-connected" id="walletConnected" style="display: none;">
+      <span>Connected:</span>
+      <span class="wallet-address" id="walletAddress"></span>
+    </div>
+  </div>
+
   <div class="slot-machine" id="slot-machine">
     <div class="slots">
       <div class="slot" id="slot1">🪙</div>
@@ -125,10 +188,63 @@
     </div>
     <button onclick="spin()" id="spinButton">Spin (1 SOL)</button>
     <div class="result" id="result"></div>
-    <div class="score" id="score">Balance: 100 SOL</div>
+    <div class="balance" id="balance">Balance: 0 SOL</div>
   </div>
 
+  <!-- REPLACE THIS HREF WITH YOUR PUMP.FUN LAUNCH LINK -->
+  <a href="https://pump.fun" class="pumpfun-btn" id="pumpfunBtn" target="_blank">
+    🚀 Launch on Pump.fun
+  </a>
+
   <script>
+    // Phantom Wallet Integration
+    const connectWallet = document.getElementById('connectWallet');
+    const walletConnected = document.getElementById('walletConnected');
+    const walletAddress = document.getElementById('walletAddress');
+    const spinButton = document.getElementById('spinButton');
+    const balanceDisplay = document.getElementById('balance');
+    const pumpfunBtn = document.getElementById('pumpfunBtn');
+
+    let balance = 0;
+    let isSpinning = false;
+    let publicKey = null;
+
+    // Initialize when window loads
+    window.addEventListener('load', async () => {
+      if (window.solana && window.solana.isPhantom) {
+        // Check if already connected
+        try {
+          const response = await window.solana.connect({ onlyIfTrusted: true });
+          publicKey = response.publicKey.toString();
+          walletAddress.textContent = `${publicKey.substring(0, 4)}...${publicKey.substring(publicKey.length - 4)}`;
+          connectWallet.style.display = 'none';
+          walletConnected.style.display = 'flex';
+          updateBalance(10); // Give 10 SOL for demo purposes
+        } catch (e) {
+          console.log("Not connected automatically");
+        }
+      }
+    });
+
+    // Connect Wallet Handler
+    connectWallet.addEventListener('click', async () => {
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          const response = await window.solana.connect();
+          publicKey = response.publicKey.toString();
+          walletAddress.textContent = `${publicKey.substring(0, 4)}...${publicKey.substring(publicKey.length - 4)}`;
+          connectWallet.style.display = 'none';
+          walletConnected.style.display = 'flex';
+          updateBalance(10); // Give 10 SOL for demo purposes
+        } catch (err) {
+          console.error("Connection error:", err);
+        }
+      } else {
+        window.open('https://phantom.app/', '_blank');
+      }
+    });
+
+    // Game Logic
     const symbols = [
       { name: "Solana", emoji: "🪙" },
       { name: "Rocket", emoji: "🚀" },
@@ -137,22 +253,19 @@
       { name: "Fire", emoji: "🔥" }
     ];
 
-    let balance = 100;
-    let isSpinning = false;
-
-    function spin() {
-      if (isSpinning) return;
-      
-      // Deduct 1 SOL per spin
-      if (balance < 1) {
-        document.getElementById("result").textContent = "❌ Not enough SOL!";
-        return;
+    function updateBalance(amount) {
+      if (amount !== undefined) {
+        balance = amount;
       }
+      balanceDisplay.textContent = `Balance: ${balance} SOL`;
+      spinButton.disabled = balance < 1 || isSpinning;
+    }
+
+    async function spin() {
+      if (isSpinning || !publicKey || balance < 1) return;
       
-      balance -= 1;
-      updateBalance();
       isSpinning = true;
-      document.getElementById("spinButton").disabled = true;
+      updateBalance();
       document.getElementById("result").textContent = "Spinning...";
       
       // Add spinning animation
@@ -166,47 +279,75 @@
         symbols[Math.floor(Math.random() * symbols.length)]
       ];
       
-      // Stop spinning after 1.5 seconds
-      setTimeout(() => {
-        slots.forEach(slot => slot.classList.remove("spinning"));
-        
-        // Display results
-        document.getElementById("slot1").textContent = results[0].emoji;
-        document.getElementById("slot2").textContent = results[1].emoji;
-        document.getElementById("slot3").textContent = results[2].emoji;
-        
-        // Check for wins
-        let winAmount = 0;
-        if (results[0].name === results[1].name && results[1].name === results[2].name) {
-          // Jackpot - 3 matching symbols
-          winAmount = 50;
-          document.getElementById("result").innerHTML = `🎉 <strong>JACKPOT!</strong> 3 ${results[0].name}s! +${winAmount} SOL`;
-          document.getElementById("slot-machine").classList.add("jackpot");
-          setTimeout(() => {
-            document.getElementById("slot-machine").classList.remove("jackpot");
-          }, 1500);
-        } else if (results[0].name === results[1].name || results[1].name === results[2].name || results[0].name === results[2].name) {
-          // 2 matching symbols
-          winAmount = 5;
-          document.getElementById("result").textContent = `😎 Nice! 2 matching symbols! +${winAmount} SOL`;
-        } else {
-          document.getElementById("result").textContent = "🙃 Try again!";
+      // Simulate transaction (in a real app, you would send an actual transaction)
+      setTimeout(async () => {
+        try {
+          // In a real implementation, you would:
+          // 1. Send transaction to deduct 1 SOL
+          // 2. Wait for confirmation
+          // 3. Calculate winnings
+          // 4. Send winnings back
+          
+          // For demo, we just simulate it
+          balance -= 1;
+          
+          // Stop spinning animation
+          slots.forEach(slot => slot.classList.remove("spinning"));
+          
+          // Display results
+          document.getElementById("slot1").textContent = results[0].emoji;
+          document.getElementById("slot2").textContent = results[1].emoji;
+          document.getElementById("slot3").textContent = results[2].emoji;
+          
+          // Check for wins
+          let winAmount = 0;
+          if (results[0].name === results[1].name && results[1].name === results[2].name) {
+            // Jackpot - 3 matching symbols
+            winAmount = 50;
+            document.getElementById("result").innerHTML = `🎉 <strong>JACKPOT!</strong> 3 ${results[0].name}s! +${winAmount} SOL`;
+            document.getElementById("slot-machine").classList.add("jackpot");
+            setTimeout(() => {
+              document.getElementById("slot-machine").classList.remove("jackpot");
+            }, 1500);
+          } else if (results[0].name === results[1].name || results[1].name === results[2].name || results[0].name === results[2].name) {
+            // 2 matching symbols
+            winAmount = 5;
+            document.getElementById("result").textContent = `😎 Nice! 2 matching symbols! +${winAmount} SOL`;
+          } else {
+            document.getElementById("result").textContent = "🙃 Try again!";
+          }
+          
+          // Update balance with winnings
+          balance += winAmount;
+          updateBalance();
+        } catch (err) {
+          document.getElementById("result").textContent = "❌ Transaction failed";
+          console.error(err);
+        } finally {
+          isSpinning = false;
+          updateBalance();
         }
-        
-        // Update balance with winnings
-        balance += winAmount;
-        updateBalance();
-        isSpinning = false;
-        document.getElementById("spinButton").disabled = false;
       }, 1500);
-    }
-    
-    function updateBalance() {
-      document.getElementById("score").textContent = `Balance: ${balance} SOL`;
     }
 
     // Initial spin to show emojis
-    spin();
+    setTimeout(() => {
+      if (publicKey) {
+        spin();
+      } else {
+        // Show default state
+        document.getElementById("slot1").textContent = symbols[0].emoji;
+        document.getElementById("slot2").textContent = symbols[1].emoji;
+        document.getElementById("slot3").textContent = symbols[2].emoji;
+      }
+    }, 500);
+
+    // Pump.fun button customization
+    // Replace this with your actual Pump.fun launch link when ready
+    // pumpfunBtn.href = "YOUR_ACTUAL_PUMPFUN_LINK_HERE";
   </script>
+
+  <!-- Phantom Wallet Provider -->
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
 </body>
 </html>
