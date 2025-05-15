@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SOL Slot Machine with Wallet Adapter</title>
+  <title>SOL Slot Machine DEMO</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -79,14 +79,12 @@
       font-size: 16px;
       color: #66fcf1;
     }
-    .wallet-address {
-      background: rgba(153, 69, 255, 0.2);
-      padding: 8px 12px;
+    .demo-notice {
+      background: rgba(255, 215, 0, 0.2);
+      padding: 10px;
       border-radius: 8px;
-      font-size: 14px;
-      display: inline-block;
-      margin-left: 10px;
-      user-select: all;
+      margin: 20px auto;
+      max-width: 400px;
     }
     @keyframes slot-spin {
       0% { transform: translateY(-10px); }
@@ -114,14 +112,10 @@
   </style>
 </head>
 <body>
-  <h1>SOL Slot Machine 🎰</h1>
+  <h1>SOL Slot Machine DEMO 🎰</h1>
 
-  <div class="wallet-section" id="walletSection">
-    <button id="connectWalletBtn">Connect Wallet</button>
-    <span id="walletInfo" style="display:none;">
-      Connected: <span class="wallet-address" id="walletAddress"></span>
-      <button id="disconnectWalletBtn" style="margin-left: 15px; background:#ff5555; color:#fff;">Disconnect</button>
-    </span>
+  <div class="demo-notice">
+    🚀 DEMO MODE - No wallet needed! Play with fake SOL.
   </div>
 
   <div class="slot-machine" id="slot-machine">
@@ -132,43 +126,17 @@
     </div>
     <button id="spinButton">Spin (1 SOL)</button>
     <div class="result" id="result"></div>
-    <div class="balance" id="balance">Balance: 0 SOL</div>
+    <div class="balance" id="balance">Balance: 10.00 SOL</div>
   </div>
 
-  <script type="module">
-    import {
-      Connection,
-      clusterApiUrl,
-      PublicKey
-    } from "https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/+esm";
-
-    import {
-      WalletAdapterNetwork
-    } from "https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-base@latest/+esm";
-
-    import {
-      PhantomWalletAdapter
-    } from "https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-phantom@latest/+esm";
-
-    // Set up network and connection
-    const network = WalletAdapterNetwork.Devnet;
-    const connection = new Connection(clusterApiUrl(network), "confirmed");
-
-    // Setup Phantom wallet adapter
-    const wallet = new PhantomWalletAdapter();
-
+  <script>
     // Elements
-    const connectWalletBtn = document.getElementById("connectWalletBtn");
-    const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
-    const walletInfo = document.getElementById("walletInfo");
-    const walletAddressSpan = document.getElementById("walletAddress");
     const spinButton = document.getElementById("spinButton");
     const resultDiv = document.getElementById("result");
     const balanceDiv = document.getElementById("balance");
 
-    let balance = 0;
+    let balance = 10; // Starting demo balance
     let isSpinning = false;
-    let publicKey = null;
 
     // Slot machine symbols
     const symbols = [
@@ -179,43 +147,10 @@
       { name: "Fire", emoji: "🔥" }
     ];
 
-    // Connect wallet function
-    async function connectWallet() {
-      try {
-        await wallet.connect();
-        if (wallet.connected) {
-          publicKey = wallet.publicKey.toString();
-          walletAddressSpan.textContent = `${publicKey.substring(0, 4)}...${publicKey.slice(-4)}`;
-          connectWalletBtn.style.display = "none";
-          walletInfo.style.display = "inline";
-          balance = 10; // Demo starting balance
-          updateBalance();
-        }
-      } catch (error) {
-        alert("Failed to connect wallet. Make sure Phantom wallet is installed and unlocked.");
-        console.error(error);
-      }
-    }
-
-    // Disconnect wallet function
-    async function disconnectWallet() {
-      try {
-        await wallet.disconnect();
-      } catch {}
-      publicKey = null;
-      walletAddressSpan.textContent = "";
-      connectWalletBtn.style.display = "inline-block";
-      walletInfo.style.display = "none";
-      balance = 0;
-      updateBalance();
-      resetSlots();
-      resultDiv.textContent = "";
-    }
-
-    // Update balance display and disable spin if not enough
+    // Update balance display
     function updateBalance() {
       balanceDiv.textContent = `Balance: ${balance.toFixed(2)} SOL`;
-      spinButton.disabled = balance < 1 || isSpinning;
+      spinButton.disabled = isSpinning || balance < 1;
     }
 
     // Reset slots to default symbol
@@ -226,15 +161,17 @@
     }
 
     // Spin function
-    async function spin() {
+    function spin() {
       if (isSpinning) return;
       if (balance < 1) {
-        alert("Not enough balance to spin!");
+        alert("Game over! Refresh page to play again.");
         return;
       }
+      
       isSpinning = true;
       updateBalance();
       resultDiv.textContent = "Spinning...";
+      
       const slots = [
         document.getElementById("slot1"),
         document.getElementById("slot2"),
@@ -285,34 +222,10 @@
     }
 
     // Event listeners
-    connectWalletBtn.addEventListener("click", connectWallet);
-    disconnectWalletBtn.addEventListener("click", disconnectWallet);
     spinButton.addEventListener("click", spin);
 
-    // On page load, reset slots and balance
-    resetSlots();
+    // Initialize
     updateBalance();
-
-    // Wallet event handlers to keep UI sync
-    wallet.on("connect", () => {
-      publicKey = wallet.publicKey.toString();
-      walletAddressSpan.textContent = `${publicKey.substring(0, 4)}...${publicKey.slice(-4)}`;
-      connectWalletBtn.style.display = "none";
-      walletInfo.style.display = "inline";
-      balance = 10; // demo balance
-      updateBalance();
-    });
-
-    wallet.on("disconnect", () => {
-      publicKey = null;
-      walletAddressSpan.textContent = "";
-      connectWalletBtn.style.display = "inline-block";
-      walletInfo.style.display = "none";
-      balance = 0;
-      updateBalance();
-      resetSlots();
-      resultDiv.textContent = "";
-    });
   </script>
 </body>
 </html>
