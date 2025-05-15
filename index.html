@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SOL Slot Machine 🎰</title>
+  <title>SOL Slot Machine with Wallet Adapter</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -19,30 +19,26 @@
     .wallet-section {
       margin-bottom: 20px;
     }
-    .wallet-btn {
-      background: #9945FF;
-      color: white;
+    button {
+      background: #00ffa3;
+      color: #0b0c10;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 25px;
+      font-size: 16px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
       transition: all 0.3s;
+      margin-top: 10px;
     }
-    .wallet-btn:hover {
-      background: #7a36cc;
+    button:hover {
+      background: #00cc88;
+      transform: scale(1.05);
     }
-    .wallet-connected {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .wallet-address {
-      background: rgba(153, 69, 255, 0.2);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 14px;
+    button:disabled {
+      background: #45a29e;
+      cursor: not-allowed;
+      transform: none;
     }
     .slot-machine {
       margin: 20px auto;
@@ -73,27 +69,6 @@
     .slot.spinning {
       animation: slot-spin 0.1s infinite;
     }
-    button {
-      background: #00ffa3;
-      color: #0b0c10;
-      border: none;
-      padding: 12px 25px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.3s;
-      margin-top: 10px;
-    }
-    button:hover:not(:disabled) {
-      background: #00cc88;
-      transform: scale(1.05);
-    }
-    button:disabled {
-      background: #45a29e;
-      cursor: not-allowed;
-      transform: none;
-    }
     .result {
       margin-top: 20px;
       font-size: 18px;
@@ -104,24 +79,14 @@
       font-size: 16px;
       color: #66fcf1;
     }
-    .pumpfun-btn {
-      display: block;
-      margin: 30px auto;
-      background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
-      color: white;
-      border: none;
-      padding: 15px 30px;
-      font-size: 18px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.3s;
-      text-decoration: none;
-      max-width: 300px;
-    }
-    .pumpfun-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    .wallet-address {
+      background: rgba(153, 69, 255, 0.2);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: inline-block;
+      margin-left: 10px;
+      user-select: all;
     }
     @keyframes slot-spin {
       0% { transform: translateY(-10px); }
@@ -150,13 +115,13 @@
 </head>
 <body>
   <h1>SOL Slot Machine 🎰</h1>
-  
+
   <div class="wallet-section" id="walletSection">
-    <button class="wallet-btn" id="connectWallet">Connect Phantom Wallet</button>
-    <div class="wallet-connected" id="walletConnected" style="display: none;">
-      <span>Connected:</span>
-      <span class="wallet-address" id="walletAddress"></span>
-    </div>
+    <button id="connectWalletBtn">Connect Wallet</button>
+    <span id="walletInfo" style="display:none;">
+      Connected: <span class="wallet-address" id="walletAddress"></span>
+      <button id="disconnectWalletBtn" style="margin-left: 15px; background:#ff5555; color:#fff;">Disconnect</button>
+    </span>
   </div>
 
   <div class="slot-machine" id="slot-machine">
@@ -165,27 +130,47 @@
       <div class="slot" id="slot2">🪙</div>
       <div class="slot" id="slot3">🪙</div>
     </div>
-    <button onclick="spin()" id="spinButton">Spin (1 SOL)</button>
+    <button id="spinButton">Spin (1 SOL)</button>
     <div class="result" id="result"></div>
     <div class="balance" id="balance">Balance: 0 SOL</div>
   </div>
 
-  <a href="https://pump.fun" class="pumpfun-btn" id="pumpfunBtn" target="_blank">
-    🚀 Launch on Pump.fun
-  </a>
+  <script type="module">
+    import {
+      Connection,
+      clusterApiUrl,
+      PublicKey
+    } from "https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/+esm";
 
-  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
-  <script>
-    const connectWallet = document.getElementById('connectWallet');
-    const walletConnected = document.getElementById('walletConnected');
-    const walletAddress = document.getElementById('walletAddress');
-    const spinButton = document.getElementById('spinButton');
-    const balanceDisplay = document.getElementById('balance');
+    import {
+      WalletAdapterNetwork
+    } from "https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-base@latest/+esm";
+
+    import {
+      PhantomWalletAdapter
+    } from "https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-phantom@latest/+esm";
+
+    // Set up network and connection
+    const network = WalletAdapterNetwork.Devnet;
+    const connection = new Connection(clusterApiUrl(network), "confirmed");
+
+    // Setup Phantom wallet adapter
+    const wallet = new PhantomWalletAdapter();
+
+    // Elements
+    const connectWalletBtn = document.getElementById("connectWalletBtn");
+    const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
+    const walletInfo = document.getElementById("walletInfo");
+    const walletAddressSpan = document.getElementById("walletAddress");
+    const spinButton = document.getElementById("spinButton");
+    const resultDiv = document.getElementById("result");
+    const balanceDiv = document.getElementById("balance");
 
     let balance = 0;
     let isSpinning = false;
     let publicKey = null;
 
+    // Slot machine symbols
     const symbols = [
       { name: "Solana", emoji: "🪙" },
       { name: "Rocket", emoji: "🚀" },
@@ -194,95 +179,140 @@
       { name: "Fire", emoji: "🔥" }
     ];
 
-    function updateBalance(amount) {
-      if (amount !== undefined) {
-        balance = amount;
+    // Connect wallet function
+    async function connectWallet() {
+      try {
+        await wallet.connect();
+        if (wallet.connected) {
+          publicKey = wallet.publicKey.toString();
+          walletAddressSpan.textContent = `${publicKey.substring(0, 4)}...${publicKey.slice(-4)}`;
+          connectWalletBtn.style.display = "none";
+          walletInfo.style.display = "inline";
+          balance = 10; // Demo starting balance
+          updateBalance();
+        }
+      } catch (error) {
+        alert("Failed to connect wallet. Make sure Phantom wallet is installed and unlocked.");
+        console.error(error);
       }
-      balanceDisplay.textContent = `Balance: ${balance} SOL`;
-      spinButton.disabled = isSpinning || (publicKey && balance < 1);
     }
 
+    // Disconnect wallet function
+    async function disconnectWallet() {
+      try {
+        await wallet.disconnect();
+      } catch {}
+      publicKey = null;
+      walletAddressSpan.textContent = "";
+      connectWalletBtn.style.display = "inline-block";
+      walletInfo.style.display = "none";
+      balance = 0;
+      updateBalance();
+      resetSlots();
+      resultDiv.textContent = "";
+    }
+
+    // Update balance display and disable spin if not enough
+    function updateBalance() {
+      balanceDiv.textContent = `Balance: ${balance.toFixed(2)} SOL`;
+      spinButton.disabled = balance < 1 || isSpinning;
+    }
+
+    // Reset slots to default symbol
+    function resetSlots() {
+      document.getElementById("slot1").textContent = symbols[0].emoji;
+      document.getElementById("slot2").textContent = symbols[0].emoji;
+      document.getElementById("slot3").textContent = symbols[0].emoji;
+    }
+
+    // Spin function
     async function spin() {
       if (isSpinning) return;
-
-      if (publicKey && balance < 1) {
-        alert("Insufficient balance to spin.");
+      if (balance < 1) {
+        alert("Not enough balance to spin!");
         return;
       }
-
       isSpinning = true;
       updateBalance();
-
-      document.getElementById("result").textContent = "Spinning...";
-
-      const slots = document.querySelectorAll(".slot");
-      slots.forEach(slot => slot.classList.add("spinning"));
-
-      const results = [
-        symbols[Math.floor(Math.random() * symbols.length)],
-        symbols[Math.floor(Math.random() * symbols.length)],
-        symbols[Math.floor(Math.random() * symbols.length)]
+      resultDiv.textContent = "Spinning...";
+      const slots = [
+        document.getElementById("slot1"),
+        document.getElementById("slot2"),
+        document.getElementById("slot3"),
       ];
 
+      // Add spinning animation
+      slots.forEach(slot => slot.classList.add("spinning"));
+
+      // Randomly pick symbols after delay
       setTimeout(() => {
+        // Stop spinning animation
         slots.forEach(slot => slot.classList.remove("spinning"));
 
-        document.getElementById("slot1").textContent = results[0].emoji;
-        document.getElementById("slot2").textContent = results[1].emoji;
-        document.getElementById("slot3").textContent = results[2].emoji;
+        const results = [
+          symbols[Math.floor(Math.random() * symbols.length)],
+          symbols[Math.floor(Math.random() * symbols.length)],
+          symbols[Math.floor(Math.random() * symbols.length)],
+        ];
 
+        slots[0].textContent = results[0].emoji;
+        slots[1].textContent = results[1].emoji;
+        slots[2].textContent = results[2].emoji;
+
+        // Deduct spin cost
+        balance -= 1;
+
+        // Check for win
         let winAmount = 0;
         if (results[0].name === results[1].name && results[1].name === results[2].name) {
           winAmount = 50;
-          document.getElementById("result").innerHTML = `🎉 <strong>JACKPOT!</strong> 3 ${results[0].name}s! +${winAmount} SOL`;
+          resultDiv.innerHTML = `🎉 <strong>JACKPOT!</strong> 3 ${results[0].name}s! +${winAmount} SOL`;
           document.getElementById("slot-machine").classList.add("jackpot");
           setTimeout(() => {
             document.getElementById("slot-machine").classList.remove("jackpot");
           }, 1500);
-        } else if (
-          results[0].name === results[1].name ||
-          results[1].name === results[2].name ||
-          results[0].name === results[2].name
-        ) {
+        } else if (results[0].name === results[1].name || results[1].name === results[2].name || results[0].name === results[2].name) {
           winAmount = 5;
-          document.getElementById("result").textContent = `😎 Nice! 2 matching symbols! +${winAmount} SOL`;
+          resultDiv.textContent = `😎 Nice! 2 matching symbols! +${winAmount} SOL`;
         } else {
-          document.getElementById("result").textContent = "🙃 Try again!";
+          resultDiv.textContent = "🙃 Try again!";
         }
 
-        if (publicKey) {
-          balance -= 1;
-          balance += winAmount;
-          updateBalance();
-        }
-
-        isSpinning = false;
+        balance += winAmount;
         updateBalance();
+        isSpinning = false;
       }, 1500);
     }
 
-    connectWallet.addEventListener('click', async () => {
-      if (window.solana && window.solana.isPhantom) {
-        try {
-          const response = await window.solana.connect();
-          publicKey = response.publicKey.toString();
-          walletAddress.textContent = `${publicKey.substring(0,4)}...${publicKey.slice(-4)}`;
-          connectWallet.style.display = 'none';
-          walletConnected.style.display = 'flex';
+    // Event listeners
+    connectWalletBtn.addEventListener("click", connectWallet);
+    disconnectWalletBtn.addEventListener("click", disconnectWallet);
+    spinButton.addEventListener("click", spin);
 
-          updateBalance(10);
-        } catch (err) {
-          console.error("Wallet connection failed:", err);
-          alert("Failed to connect wallet.");
-        }
-      } else {
-        alert("Phantom Wallet not found. Please install it from https://phantom.app/");
-      }
+    // On page load, reset slots and balance
+    resetSlots();
+    updateBalance();
+
+    // Wallet event handlers to keep UI sync
+    wallet.on("connect", () => {
+      publicKey = wallet.publicKey.toString();
+      walletAddressSpan.textContent = `${publicKey.substring(0, 4)}...${publicKey.slice(-4)}`;
+      connectWalletBtn.style.display = "none";
+      walletInfo.style.display = "inline";
+      balance = 10; // demo balance
+      updateBalance();
     });
 
-    window.onload = () => {
-      updateBalance(0);
-    };
+    wallet.on("disconnect", () => {
+      publicKey = null;
+      walletAddressSpan.textContent = "";
+      connectWalletBtn.style.display = "inline-block";
+      walletInfo.style.display = "none";
+      balance = 0;
+      updateBalance();
+      resetSlots();
+      resultDiv.textContent = "";
+    });
   </script>
 </body>
 </html>
